@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace GitHub_Lookup.Classes
 {
-    // Github issues data for specific repository
-    class GitHubIssues
+    // Github issue entry
+    class GitHubIssue
     {
         public string login { get; set; }
         public string title { get; set; }

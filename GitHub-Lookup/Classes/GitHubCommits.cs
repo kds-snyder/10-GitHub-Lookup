@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace GitHub_Lookup.Classes
 {
-    // Github commit data for specific repository
-    class GitHubCommits
+    // Github commit entry
+    class GitHubCommit
     {
         public string name { get; set; }
         public string email { get; set; }

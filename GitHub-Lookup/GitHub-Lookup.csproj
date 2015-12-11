@@ -75,11 +75,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Classes\GitHubCommitList.cs" />
     <Compile Include="Classes\GitHubCommits.cs" />
     <Compile Include="Classes\GitHubIssues.cs" />
     <Compile Include="Classes\GitHubClient.cs" />
     <Compile Include="Classes\GitHubRepos.cs" />
     <Compile Include="Classes\GitHubRepositoryList.cs" />
+    <Compile Include="Classes\WebData.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

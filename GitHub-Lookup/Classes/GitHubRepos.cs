@@ -10,6 +10,8 @@ namespace GitHub_Lookup.Classes
     public class GitHubRepository
     {
         public string name { get; set; }
+        public string commits_url { get; set; }
+        public string issues_url { get; set; }
         public int stargazers_count { get; set; }
         public int watchers_count { get; set; }
     }

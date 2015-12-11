@@ -17,7 +17,7 @@ namespace GitHub_Lookup
             // Display Github data for user until <enter> is pressed
             while (true)
             {
-                Console.Write("Enter the GitHub username (Press <enter> to exit): ");
+                Console.Write("Enter the GitHub username (press <enter> to exit): ");
                 string gitUser = Console.ReadLine();
                 if (gitUser.Length == 0)
                 {
@@ -25,44 +25,20 @@ namespace GitHub_Lookup
                 }
 
                 // Get the GitHub data
-                GitHubClient githubClient = new GitHubClient();
-                if (getGithubData(gitUser, ref githubClient))
+                //GitHubClient githubClient = new GitHubClient();
+                GitHubClient githubClient = GitHubClient.getGithubData(gitUser);
+
+                if (githubClient != null)
                 {
                     //Display the Github data
-                    displayGithubData(githubClient);
+                    displayGithubData(gitUser, githubClient);
                 }
             }
         }
 
-        // Read GitHub data for input userName, placing it in githubClient
-        // Return true if data was successfully read, otherwise return false
-        static bool getGithubData(string userName, ref GitHubClient githubClient)
-        {
-            try
-            {
-                string json = getWebData("https://api.github.com/users/" + userName,
-                                                 "User " + userName + " not found");
-                if (json.Length > 0)
-                {
-                    githubClient =
-                               JsonConvert.DeserializeObject<GitHubClient>(json);
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-	        catch (Exception e)
-	        {
-                Console.WriteLine
-                    ("An error occurred: {0}", e.Message);                                             
-                return false;                                        
-	        } 
-        }
         
         // Display the GitHub data contained in githubClient
-        static void displayGithubData(GitHubClient githubClient)
+        static void displayGithubData(string gitUserName, GitHubClient githubClient)
         {
             // GitHub name is sometimes empty
             if (githubClient.name != null)
@@ -78,59 +54,58 @@ namespace GitHub_Lookup
             
             Console.WriteLine("Followed by {0} users, and following {1} users",
                                 githubClient.followers, githubClient.following);
-            Console.WriteLine("Number of repositories: {0}", githubClient.public_repos);
-            //Console.WriteLine("Repo URL: {0}", githubClient.repos_url);
+            Console.WriteLine("Number of repositories: {0}", githubClient.public_repos);            
 
+            // Display repository data if there are repositories
             if (githubClient.public_repos > 0)
             {
-                displayGithubRepos(githubClient.repos_url);
+                 displayGithubRepos(gitUserName, githubClient.repos_url);                             
             }           
      }
      
      // Display the Github repositories, given input URL with repository info
-     static void displayGithubRepos(string repos_url)
+     static void displayGithubRepos(string gitUser, string repos_url)
      {
             string json = getWebData(repos_url, 
                 "Repository info at " + repos_url + " not found"); 
             if (json.Length > 0)
             {
-                //GitHubRepositoryList githubRepoList = new GitHubRepositoryList();
-                //githubRepoList =
-                  //  JsonConvert.DeserializeObject<GitHubRepositoryList>(json);
-
-                List<GitHubRepository> githubRepoList = 
-                   JsonConvert.DeserializeObject<List<GitHubRepository>>(json);
+               GitHubRepositoryList.repositories =
+                    JsonConvert.DeserializeObject<List<GitHubRepository>>(json);
 
                 Console.WriteLine("Repositories:");
 
-                foreach (GitHubRepository repository in githubRepoList)
+                foreach (GitHubRepository repository in 
+                                GitHubRepositoryList.repositories)
                 {
                     Console.WriteLine("{0}, {1} stars, {2} watchers",
                         repository.name, repository.stargazers_count,
-                            repository.watchers_count);
+                            repository.watchers_count);                   
                 }
 
                 // Display additional repository information
-                //displayRepoInfo(githubRepoList);
+                displayRepoInfo(gitUser, GitHubRepositoryList.repositories);
             }
         }
 
-        // Display additional info for repositories
-        // Input contains list of repository info
-        static void displayRepoInfo(List<GitHubRepository> githubRepoList)
+            // Display additional info for repositories
+            // Input contains list of repository info
+            static void displayRepoInfo(string gitUser,
+                                List<GitHubRepository> githubRepoList)
         {
             bool finished = false;
             while (!finished)
             {
                 Console.Write
-               ("Enter issue to view issues or commit to see commits" +  
+               ("Enter issue to view issues, or commit to view commits," +  
                        " or <return> to stop viewing data for this user: ");
                 string input = Console.ReadLine();
                 switch (input.ToLower())
                 {
                     case "commit":
                     case "c":
-                        Console.WriteLine("commit");
+                        //Console.WriteLine("commit");
+                        displayCommits(gitUser, githubRepoList);
                         break;
                     case "issue":
                     case "i":
@@ -142,42 +117,53 @@ namespace GitHub_Lookup
                     default:
                         break;
                 }
-            }
-            
+            }            
         }
 
-        // Read from input webUrl
-        // Return result of read as string
-        // If read fails:
-        //   If web exception ocurred, display webErrString & return empty string
-        //   If other exception ocurred, display the exception & return empty string
-        static string getWebData(string webUrl,
-                        string webErrString = "An error occurred reading the data")
+        // Display the commits for a repository as specified by the user
+        static void displayCommits(string gitUserName,
+                            List<GitHubRepository> githubRepoList)
         {
-            try
+            while (true)
             {
-                // Read the data at the input URL
-                using (WebClient webClient = new WebClient())
+                Console.Write
+                    ("Enter the repository name (press <enter> to return to previous prompt): ");
+                string repositoryName = Console.ReadLine();
+                if (repositoryName.Length == 0)
                 {
-                    webClient.Headers.Add("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
-
-                    string json = webClient.DownloadString(webUrl);
-                    return json;
+                    break;
                 }
-            }
-            catch (WebException)
-            {
-                Console.WriteLine(webErrString);
-                return "";
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine
-                    ("An error occurred while reading URL {0}: {1}",
-                    webUrl, e.Message);
-                return "";
+
+                // Get the repository commit data
+                string repositoryCommitUrl = "https://api.github.com/repos/"
+                    + gitUserName + "/" + repositoryName + "/commits";
+                string json = getWebData(repositoryCommitUrl,
+                    "Error occurred reading " + repositoryName + " commit data"
+                    + " at " + repositoryCommitUrl);
+                if (json.Length > 0)
+                {
+//                    Console.WriteLine(json);
+                    GitHubCommitList.commits =
+                        JsonConvert.DeserializeObject<List<GitHubCommit>>(json);
+
+                    foreach (GitHubCommit commit in
+                                         GitHubCommitList.commits)
+                    {
+                        Console.WriteLine("Commit date: {0}", commit.date);
+                        Console.WriteLine("Email: {0}", commit.email);
+                        Console.WriteLine("Name: {0}", commit.name);
+                        Console.WriteLine("Message: {0}", commit.message);
+                        Console.WriteLine("-------------------------------------");
+                    }
+
+
+                }
+
             }
         }
+
+
+
 
     }
 }
